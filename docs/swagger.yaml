@@ -1,0 +1,205 @@
+definitions:
+  entity.UserToken:
+    properties:
+      refresh_token:
+        type: string
+      token:
+        type: string
+    type: object
+  model.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  model.Pagination:
+    properties:
+      current_page:
+        type: integer
+      next:
+        type: string
+      page_size:
+        type: integer
+      prev:
+        type: string
+      total_page:
+        type: integer
+      total_result:
+        type: integer
+    type: object
+  model.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  model.Response:
+    properties:
+      errors: {}
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/model.Pagination'
+      payload: {}
+      status:
+        type: string
+      statusCode:
+        type: integer
+    type: object
+  model.SignupRequest:
+    properties:
+      email:
+        type: string
+      mobile:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      user_type:
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - user_type
+    type: object
+  model.ToggleActiveRequest:
+    properties:
+      is_active:
+        type: boolean
+      user_id:
+        type: integer
+    required:
+    - is_active
+    - user_id
+    type: object
+info:
+  contact:
+    email: novanadrian@gmail.com
+    name: Novan Adrian
+    url: https://novanadrian.com
+  description: Golang API server example
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  title: Golang API Server
+  version: "1.0"
+paths:
+  /account/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user
+      parameters:
+      - description: Login Request
+        in: body
+        name: LoginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                Payload:
+                  $ref: '#/definitions/entity.UserToken'
+              type: object
+      security:
+      - Bearer: []
+      summary: Login
+      tags:
+      - Account
+  /account/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh an access token
+      parameters:
+      - description: Refresh token request
+        in: body
+        name: model.RefreshTokenRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.Response'
+            - properties:
+                Payload:
+                  $ref: '#/definitions/entity.UserToken'
+              type: object
+      security:
+      - Bearer: []
+      summary: Refresh Token
+      tags:
+      - Account
+  /account/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a user
+      parameters:
+      - description: Sign Up Request
+        in: body
+        name: SignupRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - Bearer: []
+      summary: Signup
+      tags:
+      - Account
+  /account/toggle:
+    put:
+      consumes:
+      - application/json
+      description: Toggling active/inactive user
+      parameters:
+      - description: Request
+        in: body
+        name: ToggleActiveRequest
+        required: true
+        schema:
+          $ref: '#/definitions/model.ToggleActiveRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - Bearer: []
+      summary: Toggling active/inactive user
+      tags:
+      - Account
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,39 @@
+[
+    {
+        "name": "account-login",
+        "path": "/account/login",
+        "method": "POST",
+        "module": "account",
+        "handler": "account.login",
+        "middleware": []
+    },
+    {
+        "name": "account-signup",
+        "path": "/account/signup",
+        "method": "POST",
+        "module": "account",
+        "handler": "account.signup",
+        "middleware": []
+    },
+    {
+        "name": "account-refresh",
+        "path": "/account/refresh",
+        "method": "POST",
+        "module": "account",
+        "handler": "account.refresh",
+        "middleware": [
+            "auth"
+        ]
+    },
+    {
+        "name": "account-toggle-active",
+        "path": "/account/toggle",
+        "method": "PUT",
+        "module": "account",
+        "handler": "account.toggle-active",
+        "middleware": [
+            "auth",
+            "admin_only"
+        ]
+    }
+]

@@ -1,0 +1,69 @@
+image: golang:1.16
+
+stages:
+  - build
+  - deploy
+
+.deployment_script:
+  script:
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo "Copy build file to $DEST_DIR..."
+    - scp -r ./batas-api-deploy $SSH_USER@$SSH_HOST:$DEST_DIR
+    - ssh $SSH_USER@$SSH_HOST -C "chmod 755 $DEST_DIR/batas-api-deploy/batas-api"
+    - ssh $SSH_USER@$SSH_HOST -C "cd $DEST_DIR/batas-api-deploy && ln -s ../storage/batas-api/.env ."
+    - ssh $SSH_USER@$SSH_HOST -C "cd $DEST_DIR/batas-api-deploy && ln -s ../storage/batas-api/logs/ ."
+    # Stop and Start service
+    - ssh $SSH_USER@$SSH_HOST -C "sudo systemctl stop $SERVICE_FILE"
+    - ssh $SSH_USER@$SSH_HOST -C "mv $DEST_DIR/batas-api $DEST_DIR/batas-api-backup"
+    - ssh $SSH_USER@$SSH_HOST -C "mv $DEST_DIR/batas-api-deploy $DEST_DIR/batas-api"
+    - ssh $SSH_USER@$SSH_HOST -C "sudo systemctl start $SERVICE_FILE"
+    # Clean up
+    - ssh $SSH_USER@$SSH_HOST -C "rm -rf $DEST_DIR/batas-api-backup"
+
+compile:
+  stage: build
+  allow_failure: false
+  only:
+    - develop
+    - master
+  tags:
+    - "gitlab-org"
+  script:
+    - mkdir -p batas-api-deploy/transport/http/gate
+    - cp transport/http/gate/*.json batas-api-deploy/transport/http/gate
+    - go build -o batas-api-deploy ./...
+  artifacts:
+    paths:
+      - batas-api-deploy
+
+deploy_to_staging:
+  stage: deploy
+  image: kroniak/ssh-client
+  when: on_success
+  only:
+    - develop
+  tags:
+    - "gitlab-org"
+  variables:
+    DEST_DIR: "/apps"
+    SERVICE_FILE: "batas-api.service"
+    SSH_HOST: "54.255.73.18"
+  extends: .deployment_script
+
+deploy_to_production:
+  stage: deploy
+  image: kroniak/ssh-client
+  when: manual
+  only:
+    - master
+  tags:
+    - "gitlab-org"
+  variables:
+    DEST_DIR: "/apps"
+    SERVICE_FILE: "batas-api.service"
+    SSH_HOST: "18.138.203.46"
+  extends: .deployment_script
