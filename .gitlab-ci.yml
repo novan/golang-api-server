@@ -13,16 +13,16 @@ stages:
     - chmod 600 ~/.ssh/id_rsa
     - echo "Copy build file to $DEST_DIR..."
     - scp -r ./batas-api-deploy $SSH_USER@$SSH_HOST:$DEST_DIR
-    - ssh $SSH_USER@$SSH_HOST -C "chmod 755 $DEST_DIR/batas-api-deploy/batas-api"
-    - ssh $SSH_USER@$SSH_HOST -C "cd $DEST_DIR/batas-api-deploy && ln -s ../storage/batas-api/.env ."
-    - ssh $SSH_USER@$SSH_HOST -C "cd $DEST_DIR/batas-api-deploy && ln -s ../storage/batas-api/logs/ ."
+    - ssh $SSH_USER@$SSH_HOST -C "chmod 755 $DEST_DIR/api-deploy/golang-api-server"
+    - ssh $SSH_USER@$SSH_HOST -C "cd $DEST_DIR/api-deploy && ln -s ../storage/api-server/.env ."
+    - ssh $SSH_USER@$SSH_HOST -C "cd $DEST_DIR/api-deploy && ln -s ../storage/api-server/logs/ ."
     # Stop and Start service
     - ssh $SSH_USER@$SSH_HOST -C "sudo systemctl stop $SERVICE_FILE"
-    - ssh $SSH_USER@$SSH_HOST -C "mv $DEST_DIR/batas-api $DEST_DIR/batas-api-backup"
-    - ssh $SSH_USER@$SSH_HOST -C "mv $DEST_DIR/batas-api-deploy $DEST_DIR/batas-api"
+    - ssh $SSH_USER@$SSH_HOST -C "mv $DEST_DIR/golang-api-server $DEST_DIR/api-server-backup"
+    - ssh $SSH_USER@$SSH_HOST -C "mv $DEST_DIR/api-deploy $DEST_DIR/api-server"
     - ssh $SSH_USER@$SSH_HOST -C "sudo systemctl start $SERVICE_FILE"
     # Clean up
-    - ssh $SSH_USER@$SSH_HOST -C "rm -rf $DEST_DIR/batas-api-backup"
+    - ssh $SSH_USER@$SSH_HOST -C "rm -rf $DEST_DIR/api-server-backup"
 
 compile:
   stage: build
@@ -33,12 +33,12 @@ compile:
   tags:
     - "gitlab-org"
   script:
-    - mkdir -p batas-api-deploy/transport/http/gate
-    - cp transport/http/gate/*.json batas-api-deploy/transport/http/gate
-    - go build -o batas-api-deploy ./...
+    - mkdir -p api-deploy/transport/http/gate
+    - cp transport/http/gate/*.json api-deploy/transport/http/gate
+    - go build -o api-deploy ./...
   artifacts:
     paths:
-      - batas-api-deploy
+      - api-deploy
 
 deploy_to_staging:
   stage: deploy
@@ -50,8 +50,8 @@ deploy_to_staging:
     - "gitlab-org"
   variables:
     DEST_DIR: "/apps"
-    SERVICE_FILE: "batas-api.service"
-    SSH_HOST: "54.255.73.18"
+    SERVICE_FILE: "{SERVICE_FILE_NAME}"
+    SSH_HOST: "{STAGING_HOST}"
   extends: .deployment_script
 
 deploy_to_production:
@@ -64,6 +64,6 @@ deploy_to_production:
     - "gitlab-org"
   variables:
     DEST_DIR: "/apps"
-    SERVICE_FILE: "batas-api.service"
-    SSH_HOST: "18.138.203.46"
+    SERVICE_FILE: "{SERVICE_FILE_NAME}"
+    SSH_HOST: "{STAGING_HOST}"
   extends: .deployment_script
